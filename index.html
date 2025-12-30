@@ -273,10 +273,10 @@
     </div>
 
     <script>
-        // ========== 访问码管理 ==========
-        // 有效的访问码列表（简单混淆）
-        // 你可以在这里添加或删除访问码
-        // 格式：每个码用逗号分隔
+        // ========== Google Sheets API ==========
+        const SHEET_API = 'https://script.google.com/macros/s/AKfycbxpu3TzhiF6sE-xKvjKTBv37qfAaLMIvPjrU8J7lyfQaUQDF0IdMBFAXDzPgDEfG5xm/exec';
+
+        // 有效的访问码列表
         const _0x = [
             'Y49D32W4', 'ASO3GZNT', 'QHX0VEUF', 'MZO1NBAU', 'CXUWUIWR', 'XVCJDEZ1', '6T8PWPOI', 'WULAYPAD', '4TB18NZP', 'VEMCQWIE',
             'W4XLY9WE', '6O708J5A', 'ICAHE93E', '6I4EJN7M', 'T3JZ96U1', 'MU6UBD9U', 'UTEISGEC', '0ZVYHTRG', 'RNGZMXIY', 'I6TKB2RX',
@@ -300,37 +300,46 @@
             'E7S2W5BY', '4W8V61NU', '7B76LLQ3', '61VC93RP', 'E5YKKWVH', 'TCXTKGV8', 'BDBW8LRT', 'VS67TDIL', '49QE9AZB', '8JNCAZFS'
         ];
 
-        // 已使用的码存储在 localStorage
-        const USED_KEY = 'usedCodes';
+        // 从云端获取已使用的码
+        let cloudUsedCodes = [];
 
-        function getUsedCodes() {
+        async function fetchUsedCodes() {
             try {
-                return JSON.parse(localStorage.getItem(USED_KEY) || '[]');
-            } catch {
-                return [];
+                const response = await fetch(SHEET_API);
+                const data = await response.json();
+                cloudUsedCodes = data.usedCodes || [];
+            } catch (e) {
+                console.log('无法获取云端数据，使用本地缓存');
+                cloudUsedCodes = [];
             }
         }
 
-        function markCodeAsUsed(code) {
-            const used = getUsedCodes();
-            if (!used.includes(code)) {
-                used.push(code);
-                localStorage.setItem(USED_KEY, JSON.stringify(used));
+        // 记录使用的码到云端
+        async function recordCodeToCloud(code) {
+            try {
+                await fetch(SHEET_API, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: code })
+                });
+            } catch (e) {
+                console.log('记录失败，但不影响使用');
             }
         }
 
         function isValidCode(code) {
             const upperCode = code.toUpperCase().trim();
-            const used = getUsedCodes();
-            // 检查是否在有效列表中且未被使用
-            return _0x.includes(upperCode) && !used.includes(upperCode);
+            // 检查是否在有效列表中且未被云端记录使用
+            return _0x.includes(upperCode) && !cloudUsedCodes.includes(upperCode);
         }
 
-        function verifyCode() {
+        async function verifyCode() {
             const input = document.getElementById('accessCode');
             const errorMsg = document.getElementById('errorMsg');
             const successMsg = document.getElementById('successMsg');
-            const code = input.value.trim();
+            const btn = document.querySelector('.btn-verify');
+            const code = input.value.trim().toUpperCase();
 
             if (!code) {
                 errorMsg.textContent = '请输入访问码';
@@ -339,17 +348,24 @@
                 return;
             }
 
+            // 显示加载状态
+            btn.textContent = '验证中...';
+            btn.disabled = true;
+
+            // 先从云端获取最新的已使用码列表
+            await fetchUsedCodes();
+
             if (isValidCode(code)) {
                 // 验证成功
                 errorMsg.style.display = 'none';
                 successMsg.style.display = 'block';
 
-                // 标记为已使用
-                markCodeAsUsed(code.toUpperCase().trim());
+                // 记录到云端
+                await recordCodeToCloud(code);
 
-                // 保存验证状态到 sessionStorage（当前会话有效）
+                // 保存验证状态到 sessionStorage
                 sessionStorage.setItem('verified', 'true');
-                sessionStorage.setItem('verifiedCode', code.toUpperCase().trim());
+                sessionStorage.setItem('verifiedCode', code);
 
                 // 延迟显示测试区域
                 setTimeout(() => {
@@ -358,8 +374,7 @@
                 }, 800);
             } else {
                 // 验证失败
-                const used = getUsedCodes();
-                if (used.includes(code.toUpperCase().trim())) {
+                if (cloudUsedCodes.includes(code)) {
                     errorMsg.textContent = '此访问码已被使用';
                 } else {
                     errorMsg.textContent = '访问码无效，请检查后重试';
@@ -371,6 +386,9 @@
                     input.style.borderColor = '#e0e0e0';
                 }, 2000);
             }
+
+            btn.textContent = '验证并进入';
+            btn.disabled = false;
         }
 
         // 回车键触发验证
@@ -380,12 +398,14 @@
             }
         });
 
-        // 检查是否已验证（当前会话）
-        window.onload = function() {
+        // 页面加载时检查状态
+        window.onload = async function() {
             if (sessionStorage.getItem('verified') === 'true') {
                 document.getElementById('codeSection').style.display = 'none';
                 document.getElementById('testsSection').classList.add('show');
             }
+            // 预加载已使用的码
+            await fetchUsedCodes();
         };
     </script>
 </body>
