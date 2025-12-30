@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCL-90 心理健康自评量表</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 { font-size: 1.8rem; margin-bottom: 10px; }
+        .header p { opacity: 0.9; }
+        .progress-bar {
+            height: 8px;
+            background: rgba(255,255,255,0.3);
+        }
+        .progress-fill {
+            height: 100%;
+            background: white;
+            transition: width 0.3s;
+        }
+        .content { padding: 30px; }
+        .question-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        .question-text {
+            font-size: 1.3rem;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            line-height: 1.5;
+            min-height: 60px;
+        }
+        .options { display: flex; flex-direction: column; gap: 12px; }
+        .option {
+            padding: 16px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .option:hover { border-color: #667eea; background: #f8f9ff; }
+        .option.selected { border-color: #667eea; background: #667eea; color: white; }
+        .option .circle {
+            width: 24px; height: 24px;
+            border: 2px solid currentColor;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+        .option.selected .circle { background: white; color: #667eea; }
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            gap: 15px;
+        }
+        .btn {
+            padding: 14px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-prev { background: #e0e0e0; color: #666; }
+        .btn-next { background: linear-gradient(135deg, #667eea, #764ba2); color: white; flex: 1; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        /* 结果页面样式 */
+        .result-page { display: none; }
+        .result-page.active { display: block; }
+        .test-page.hidden { display: none; }
+        .result-summary {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        .result-summary h3 { color: #2c3e50; margin-bottom: 10px; }
+        .score-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .score-item:last-child { border-bottom: none; }
+        .score-label { color: #2c3e50; font-weight: 500; }
+        .score-value { font-weight: bold; }
+        .score-value.normal { color: #27ae60; }
+        .score-value.mild { color: #f39c12; }
+        .score-value.moderate { color: #e67e22; }
+        .score-value.severe { color: #e74c3c; }
+        .factor-chart {
+            margin: 20px 0;
+        }
+        .factor-bar {
+            margin-bottom: 15px;
+        }
+        .factor-name {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+        .factor-progress {
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .factor-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.5s;
+        }
+        .btn-home {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+        @media (max-width: 600px) {
+            .content { padding: 20px; }
+            .question-text { font-size: 1.1rem; }
+            .navigation { flex-direction: column; }
+            .btn { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>SCL-90 心理健康自评量表</h1>
+            <p>请根据最近一周的实际感受选择最符合的选项</p>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+
+        <div class="content test-page" id="testPage">
+            <div class="question-info">
+                <span id="questionNum">第 1 题 / 共 90 题</span>
+                <span id="answeredCount">已答 0 题</span>
+            </div>
+            <div class="question-text" id="questionText"></div>
+            <div class="options" id="optionsContainer"></div>
+            <div class="navigation">
+                <button class="btn btn-prev" id="prevBtn" disabled>上一题</button>
+                <button class="btn btn-next" id="nextBtn">下一题</button>
+            </div>
+        </div>
+
+        <div class="content result-page" id="resultPage">
+            <h2 style="text-align: center; color: #2c3e50; margin-bottom: 20px;">测试结果分析</h2>
+
+            <div class="result-summary">
+                <h3>总体评估</h3>
+                <div class="score-item">
+                    <span class="score-label">总分</span>
+                    <span class="score-value" id="totalScore">-</span>
+                </div>
+                <div class="score-item">
+                    <span class="score-label">总均分</span>
+                    <span class="score-value" id="avgScore">-</span>
+                </div>
+                <div class="score-item">
+                    <span class="score-label">阳性项目数</span>
+                    <span class="score-value" id="positiveCount">-</span>
+                </div>
+                <div class="score-item">
+                    <span class="score-label">阳性症状均分</span>
+                    <span class="score-value" id="positiveAvg">-</span>
+                </div>
+            </div>
+
+            <h3 style="color: #2c3e50; margin-bottom: 15px;">各因子得分</h3>
+            <div class="factor-chart" id="factorChart"></div>
+
+            <div class="result-summary" id="interpretation" style="margin-top: 20px;">
+                <h3>结果解读</h3>
+                <p id="interpretationText" style="line-height: 1.8; color: #555;"></p>
+            </div>
+
+            <p style="text-align: center; color: #999; font-size: 0.9rem; margin-top: 20px;">
+                *测试结果仅供参考，不作为专业诊断依据
+            </p>
+            <a href="index.html" class="btn-home">返回首页</a>
+        </div>
+    </div>
+
+    <script>
+        // SCL-90 题目数据
+        const QUESTIONS = [
+            { id: 1, text: '头痛' },
+            { id: 2, text: '神经过敏，心中不踏实' },
+            { id: 3, text: '头脑中有不必要的想法或字句盘旋' },
+            { id: 4, text: '头昏或昏倒' },
+            { id: 5, text: '对异性的兴趣减退' },
+            { id: 6, text: '对旁人责备求全' },
+            { id: 7, text: '感到别人能控制您的思想' },
+            { id: 8, text: '责怪别人制造麻烦' },
+            { id: 9, text: '忘性大' },
+            { id: 10, text: '担心自己的衣饰整齐及仪态的端正' },
+            { id: 11, text: '容易烦恼和激动' },
+            { id: 12, text: '胸痛' },
+            { id: 13, text: '害怕空旷的场所或街道' },
+            { id: 14, text: '感到自己的精力下降，活动减慢' },
+            { id: 15, text: '想结束自己的生命' },
+            { id: 16, text: '听到旁人听不到的声音' },
+            { id: 17, text: '发抖' },
+            { id: 18, text: '感到大多数人都不可信任' },
+            { id: 19, text: '食欲不振' },
+            { id: 20, text: '容易哭泣' },
+            { id: 21, text: '同异性相处时感到害羞不自在' },
+            { id: 22, text: '感到受骗，中了圈套或有人想抓住您' },
+            { id: 23, text: '无缘无故地突然感到害怕' },
+            { id: 24, text: '自己不能控制地大发脾气' },
+            { id: 25, text: '怕单独出门' },
+            { id: 26, text: '经常责怪自己' },
+            { id: 27, text: '腰痛' },
+            { id: 28, text: '感到难以完成任务' },
+            { id: 29, text: '感到孤独' },
+            { id: 30, text: '感到苦闷' },
+            { id: 31, text: '过分担忧' },
+            { id: 32, text: '对事物不感兴趣' },
+            { id: 33, text: '感到害怕' },
+            { id: 34, text: '您的感情容易受到伤害' },
+            { id: 35, text: '旁人能知道您的私下想法' },
+            { id: 36, text: '感到别人不理解您、不同情您' },
+            { id: 37, text: '感到人们对您不友好，不喜欢您' },
+            { id: 38, text: '做事必须做得很慢以保证做得正确' },
+            { id: 39, text: '心跳得很厉害' },
+            { id: 40, text: '恶心或胃部不舒服' },
+            { id: 41, text: '感到比不上他人' },
+            { id: 42, text: '肌肉酸痛' },
+            { id: 43, text: '感到有人在监视您、谈论您' },
+            { id: 44, text: '难以入睡' },
+            { id: 45, text: '做事必须反复检查' },
+            { id: 46, text: '难以作出决定' },
+            { id: 47, text: '怕乘电车、公共汽车、地铁或火车' },
+            { id: 48, text: '呼吸有困难' },
+            { id: 49, text: '一阵阵发冷或发热' },
+            { id: 50, text: '因为感到害怕而避开某些东西、场所或活动' },
+            { id: 51, text: '脑子变空了' },
+            { id: 52, text: '身体的某一部分麻木或刺痛' },
+            { id: 53, text: '喉咙有梗塞感' },
+            { id: 54, text: '感到前途没有希望' },
+            { id: 55, text: '不能集中注意力' },
+            { id: 56, text: '感到身体的某一部分软弱无力' },
+            { id: 57, text: '感到紧张或心神不定' },
+            { id: 58, text: '感到手或脚发重' },
+            { id: 59, text: '想到死亡的事' },
+            { id: 60, text: '吃得太多' },
+            { id: 61, text: '当别人看着您或谈论您时感到不自在' },
+            { id: 62, text: '有一些不属于您自己的想法' },
+            { id: 63, text: '有想打人或伤害他人的冲动' },
+            { id: 64, text: '早醒' },
+            { id: 65, text: '必须反复洗手、点数' },
+            { id: 66, text: '睡得不稳不深' },
+            { id: 67, text: '有想摔坏或破坏东西的想法' },
+            { id: 68, text: '有一些别人没有的想法' },
+            { id: 69, text: '对别人小心谨慎' },
+            { id: 70, text: '在公共场所感到不自在' },
+            { id: 71, text: '感到任何事情都很困难' },
+            { id: 72, text: '一阵阵恐惧或惊恐' },
+            { id: 73, text: '感到在公共场所吃东西很不舒服' },
+            { id: 74, text: '经常与人争论' },
+            { id: 75, text: '单独一人时神经很紧张' },
+            { id: 76, text: '别人对您的成绩没有作出恰当的评价' },
+            { id: 77, text: '即使和别人在一起也感到孤单' },
+            { id: 78, text: '感到坐立不安心神不定' },
+            { id: 79, text: '感到自己没有什么价值' },
+            { id: 80, text: '感到熟悉的东西变成陌生或不像是真的' },
+            { id: 81, text: '大叫或摔东西' },
+            { id: 82, text: '害怕会在公共场所昏倒' },
+            { id: 83, text: '感到别人想占您的便宜' },
+            { id: 84, text: '为一些有关性的想法而很苦恼' },
+            { id: 85, text: '您认为应该因为自己的过错而受到惩罚' },
+            { id: 86, text: '感到要赶快把事情做完' },
+            { id: 87, text: '感到自己的身体有严重问题' },
+            { id: 88, text: '从未感到和其他人很亲近' },
+            { id: 89, text: '感到有罪' },
+            { id: 90, text: '感到自己的脑子有毛病' }
+        ];
+
+        const OPTIONS = [
+            { value: 1, label: '没有' },
+            { value: 2, label: '很轻' },
+            { value: 3, label: '中等' },
+            { value: 4, label: '偏重' },
+            { value: 5, label: '严重' }
+        ];
+
+        // 因子映射
+        const FACTOR_MAPPING = {
+            somatization: { name: '躯体化', items: [1, 4, 12, 27, 40, 42, 48, 49, 52, 53, 56, 58] },
+            obsessiveCompulsive: { name: '强迫症状', items: [3, 9, 10, 28, 38, 45, 46, 51, 55, 65] },
+            interpersonalSensitivity: { name: '人际关系敏感', items: [6, 21, 34, 36, 37, 41, 61, 69, 73] },
+            depression: { name: '抑郁', items: [5, 14, 15, 20, 22, 26, 29, 30, 31, 32, 54, 71, 79] },
+            anxiety: { name: '焦虑', items: [2, 17, 23, 33, 39, 57, 72, 78, 80, 86] },
+            hostility: { name: '敌对', items: [11, 24, 63, 67, 74, 81] },
+            phobicAnxiety: { name: '恐怖', items: [13, 25, 47, 50, 70, 75, 82] },
+            paranoidIdeation: { name: '偏执', items: [8, 18, 43, 68, 76, 83] },
+            psychoticism: { name: '精神病性', items: [7, 16, 35, 62, 77, 84, 85, 87, 88, 90] },
+            sleep: { name: '睡眠', items: [44, 64, 66] }
+        };
+
+        let currentQuestion = 0;
+        let answers = new Array(90).fill(null);
+
+        function init() {
+            renderQuestion();
+            updateProgress();
+
+            document.getElementById('prevBtn').addEventListener('click', goPrev);
+            document.getElementById('nextBtn').addEventListener('click', goNext);
+        }
+
+        function renderQuestion() {
+            const question = QUESTIONS[currentQuestion];
+            document.getElementById('questionText').textContent = `${currentQuestion + 1}. ${question.text}`;
+            document.getElementById('questionNum').textContent = `第 ${currentQuestion + 1} 题 / 共 90 题`;
+
+            const container = document.getElementById('optionsContainer');
+            container.innerHTML = OPTIONS.map(opt => `
+                <div class="option ${answers[currentQuestion] === opt.value ? 'selected' : ''}" data-value="${opt.value}">
+                    <div class="circle">${opt.value}</div>
+                    <span>${opt.label}</span>
+                </div>
+            `).join('');
+
+            container.querySelectorAll('.option').forEach(opt => {
+                opt.addEventListener('click', () => selectOption(parseInt(opt.dataset.value)));
+            });
+
+            document.getElementById('prevBtn').disabled = currentQuestion === 0;
+            document.getElementById('nextBtn').textContent = currentQuestion === 89 ? '提交' : '下一题';
+        }
+
+        function selectOption(value) {
+            answers[currentQuestion] = value;
+            renderQuestion();
+            updateProgress();
+
+            // 自动跳转
+            setTimeout(() => {
+                if (currentQuestion < 89) {
+                    currentQuestion++;
+                    renderQuestion();
+                }
+            }, 300);
+        }
+
+        function updateProgress() {
+            const answered = answers.filter(a => a !== null).length;
+            document.getElementById('answeredCount').textContent = `已答 ${answered} 题`;
+            document.getElementById('progressFill').style.width = `${(answered / 90) * 100}%`;
+        }
+
+        function goPrev() {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                renderQuestion();
+            }
+        }
+
+        function goNext() {
+            if (currentQuestion < 89) {
+                currentQuestion++;
+                renderQuestion();
+            } else {
+                if (answers.some(a => a === null)) {
+                    if (!confirm('还有未完成的题目，确定要提交吗？')) return;
+                }
+                showResults();
+            }
+        }
+
+        function showResults() {
+            document.getElementById('testPage').classList.add('hidden');
+            document.getElementById('resultPage').classList.add('active');
+
+            // 计算总分
+            const validAnswers = answers.filter(a => a !== null);
+            const totalScore = validAnswers.reduce((sum, a) => sum + a, 0);
+            const avgScore = (totalScore / 90).toFixed(2);
+            const positiveCount = validAnswers.filter(a => a >= 2).length;
+            const positiveSum = validAnswers.filter(a => a >= 2).reduce((sum, a) => sum + a, 0);
+            const positiveAvg = positiveCount > 0 ? (positiveSum / positiveCount).toFixed(2) : 0;
+
+            document.getElementById('totalScore').textContent = totalScore;
+            document.getElementById('avgScore').textContent = avgScore;
+            document.getElementById('avgScore').className = 'score-value ' + getScoreClass(avgScore);
+            document.getElementById('positiveCount').textContent = positiveCount;
+            document.getElementById('positiveAvg').textContent = positiveAvg;
+
+            // 计算各因子分
+            const factorChart = document.getElementById('factorChart');
+            factorChart.innerHTML = '';
+
+            Object.entries(FACTOR_MAPPING).forEach(([key, factor]) => {
+                const factorScores = factor.items.map(i => answers[i - 1] || 0);
+                const factorAvg = (factorScores.reduce((a, b) => a + b, 0) / factor.items.length).toFixed(2);
+                const color = getScoreColor(factorAvg);
+
+                factorChart.innerHTML += `
+                    <div class="factor-bar">
+                        <div class="factor-name">
+                            <span>${factor.name}</span>
+                            <span style="color: ${color}; font-weight: bold;">${factorAvg}</span>
+                        </div>
+                        <div class="factor-progress">
+                            <div class="factor-fill" style="width: ${(factorAvg / 5) * 100}%; background: ${color};"></div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // 结果解读
+            let interpretation = '';
+            if (avgScore < 1.5) {
+                interpretation = '您的心理健康状况良好，各项指标均在正常范围内。请继续保持积极健康的生活方式。';
+            } else if (avgScore < 2) {
+                interpretation = '您的心理健康状况基本正常，部分指标略高于正常水平。建议适当关注自身情绪变化，保持规律作息。';
+            } else if (avgScore < 2.5) {
+                interpretation = '您可能存在轻度的心理困扰。建议多与亲友交流，适当进行户外活动和放松训练。如症状持续，可考虑咨询专业人士。';
+            } else {
+                interpretation = '您的某些心理健康指标偏高，建议尽早寻求专业心理咨询师的帮助，进行进一步评估和指导。';
+            }
+            document.getElementById('interpretationText').textContent = interpretation;
+        }
+
+        function getScoreClass(score) {
+            if (score < 1.5) return 'normal';
+            if (score < 2) return 'mild';
+            if (score < 2.5) return 'moderate';
+            return 'severe';
+        }
+
+        function getScoreColor(score) {
+            if (score < 1.5) return '#27ae60';
+            if (score < 2) return '#f39c12';
+            if (score < 2.5) return '#e67e22';
+            return '#e74c3c';
+        }
+
+        init();
+    </script>
+</body>
+</html>

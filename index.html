@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>心理测评系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            color: white;
+            padding: 40px 0;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        .tests-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            padding: 20px 0;
+        }
+        .test-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .test-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+        .test-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+        .test-card.scl90 .test-icon { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .test-card.mbti .test-icon { background: linear-gradient(135deg, #f093fb, #f5576c); }
+        .test-card.apt .test-icon { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+        .test-title {
+            font-size: 1.4rem;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        .test-desc {
+            color: #7f8c8d;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+        }
+        .test-meta {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            color: #95a5a6;
+        }
+        .test-meta span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn-start {
+            display: inline-block;
+            width: 100%;
+            padding: 14px 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .test-card.mbti .btn-start { background: linear-gradient(135deg, #f093fb, #f5576c); }
+        .test-card.apt .btn-start { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+        .btn-start:hover {
+            transform: scale(1.02);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .footer {
+            text-align: center;
+            color: white;
+            padding: 30px 0;
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.8rem; }
+            .tests-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>心理测评系统</h1>
+            <p>专业的心理健康评估工具，帮助您更好地了解自己</p>
+        </div>
+
+        <div class="tests-grid">
+            <div class="test-card scl90">
+                <div class="test-icon">📋</div>
+                <h2 class="test-title">SCL-90 心理健康自评量表</h2>
+                <p class="test-desc">从十个维度全面评估心理健康状况，包括躯体化、强迫症状、人际关系敏感、抑郁、焦虑等方面。</p>
+                <div class="test-meta">
+                    <span>📝 90题</span>
+                    <span>⏱️ 约15分钟</span>
+                </div>
+                <a href="scl90.html" class="btn-start">开始测试</a>
+            </div>
+
+            <div class="test-card mbti">
+                <div class="test-icon">🔤</div>
+                <h2 class="test-title">MBTI 16型人格测试</h2>
+                <p class="test-desc">基于荣格心理类型理论，通过四个维度分析您的人格特点，帮助您了解自己的思维和行为模式。</p>
+                <div class="test-meta">
+                    <span>📝 93题</span>
+                    <span>⏱️ 约15分钟</span>
+                </div>
+                <a href="mbti.html" class="btn-start">开始测试</a>
+            </div>
+
+            <div class="test-card apt">
+                <div class="test-icon">⭐</div>
+                <h2 class="test-title">APT 天赋潜能评估系统</h2>
+                <p class="test-desc">全面评估您在16个核心能力维度的表现，包括创造力、情感洞察力、领导力、逻辑推理等方面。</p>
+                <div class="test-meta">
+                    <span>📝 60题</span>
+                    <span>⏱️ 约10分钟</span>
+                </div>
+                <a href="apt.html" class="btn-start">开始测试</a>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>测试结果仅供参考，不作为专业诊断依据</p>
+            <p>如有心理健康问题，请咨询专业心理咨询师</p>
+        </div>
+    </div>
+</body>
+</html>

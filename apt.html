@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APT 天赋潜能评估系统</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 { font-size: 1.8rem; margin-bottom: 10px; }
+        .progress-bar { height: 8px; background: rgba(255,255,255,0.3); }
+        .progress-fill { height: 100%; background: white; transition: width 0.3s; }
+        .content { padding: 30px; }
+        .question-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            color: #7f8c8d;
+        }
+        .question-text {
+            font-size: 1.3rem;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+        .options { display: flex; flex-direction: column; gap: 10px; }
+        .option {
+            padding: 16px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .option:hover { border-color: #4facfe; background: #f0faff; }
+        .option.selected { border-color: #4facfe; background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; }
+        .option .letter {
+            width: 28px; height: 28px;
+            background: #4facfe;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .option.selected .letter { background: white; color: #4facfe; }
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            gap: 15px;
+        }
+        .btn {
+            padding: 14px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-prev { background: #e0e0e0; color: #666; }
+        .btn-next { background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; flex: 1; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* 结果页面 */
+        .result-page { display: none; }
+        .result-page.active { display: block; }
+        .test-page.hidden { display: none; }
+        .radar-chart { width: 100%; height: 450px; margin: 20px 0; }
+        .result-summary {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 4px solid #4facfe;
+            line-height: 1.8;
+        }
+        .talent-list { margin: 20px 0; }
+        .talent-item {
+            margin-bottom: 15px;
+        }
+        .talent-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        .talent-name { font-weight: 600; color: #2c3e50; }
+        .talent-score { color: #4facfe; font-weight: bold; }
+        .talent-bar {
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .talent-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.5s;
+        }
+        .talent-desc {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 5px;
+        }
+        .level-high { background: linear-gradient(90deg, #27ae60, #2ecc71); }
+        .level-medium { background: linear-gradient(90deg, #f39c12, #f1c40f); }
+        .level-low { background: linear-gradient(90deg, #e74c3c, #c0392b); }
+        .btn-home {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+        @media (max-width: 600px) {
+            .content { padding: 20px; }
+            .question-text { font-size: 1.1rem; }
+            .navigation { flex-direction: column; }
+            .btn { width: 100%; }
+            .radar-chart { height: 350px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>APT 天赋潜能评估系统</h1>
+            <p>发现您的核心能力优势</p>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+
+        <div class="content test-page" id="testPage">
+            <div class="question-info">
+                <span id="questionNum">第 1 题 / 共 60 题</span>
+                <span id="answeredCount">已答 0 题</span>
+            </div>
+            <div class="question-text" id="questionText"></div>
+            <div class="options" id="optionsContainer"></div>
+            <div class="navigation">
+                <button class="btn btn-prev" id="prevBtn" disabled>上一题</button>
+                <button class="btn btn-next" id="nextBtn">下一题</button>
+            </div>
+        </div>
+
+        <div class="content result-page" id="resultPage">
+            <h2 style="text-align: center; color: #2c3e50; margin-bottom: 10px;">您的天赋潜能分析报告</h2>
+
+            <div id="radarChart" class="radar-chart"></div>
+
+            <div class="result-summary" id="resultSummary"></div>
+
+            <h3 style="color: #2c3e50; margin: 20px 0 15px;">天赋潜能详细排名</h3>
+            <div class="talent-list" id="talentList"></div>
+
+            <p style="text-align: center; color: #999; font-size: 0.9rem; margin-top: 20px;">
+                *测试结果仅供参考，帮助您发现潜能优势
+            </p>
+            <a href="index.html" class="btn-home">返回首页</a>
+        </div>
+    </div>
+
+    <script>
+        // 天赋维度定义
+        const TALENTS = [
+            { id: 'humor', name: '幽默表达', desc: '运用幽默缓解紧张、建立积极社交氛围的能力' },
+            { id: 'memory', name: '信息记忆', desc: '有效存储和提取信息的知识管理能力' },
+            { id: 'empathy', name: '情感共鸣', desc: '感知和理解他人情感状态的共情能力' },
+            { id: 'insight', name: '深度洞察', desc: '透过现象发现本质问题的分析能力' },
+            { id: 'learning', name: '学习适应', desc: '快速掌握新知识技能的适应能力' },
+            { id: 'leadership', name: '领导影响', desc: '引导团队达成目标的组织影响力' },
+            { id: 'creativity', name: '创新思维', desc: '产生新颖解决方案的创造性思维能力' },
+            { id: 'music', name: '音乐感知', desc: '对音乐元素的敏感度和表达能力' },
+            { id: 'logic', name: '逻辑推理', desc: '系统分析和推理的思维能力' },
+            { id: 'communication', name: '沟通表达', desc: '清晰传递信息和观点的表达能力' },
+            { id: 'coordination', name: '身体协调', desc: '身体运动和控制的身体能力' },
+            { id: 'self_discipline', name: '自我管理', desc: '规划和控制个人行为的自律能力' },
+            { id: 'planning', name: '规划组织', desc: '制定和执行计划的组织能力' },
+            { id: 'focus', name: '专注持久', desc: '维持注意力集中的持久能力' },
+            { id: 'imagination', name: '想象构思', desc: '构建心理图像和概念的想象能力' },
+            { id: 'adaptability', name: '应变调整', desc: '适应变化调整策略的灵活能力' }
+        ];
+
+        // 题目数据
+        const QUESTIONS = [
+            { text: "遇到尴尬场面时，我通常会想办法让气氛轻松点", talents: ['humor', 'adaptability'] },
+            { text: "学新东西时，我喜欢用有趣的方法来帮助记忆", talents: ['humor', 'memory'] },
+            { text: "在团队合作中，我比较擅长活跃气氛", talents: ['humor', 'communication'] },
+            { text: "面对困难时，我习惯往好的方面想", talents: ['humor', 'adaptability'] },
+            { text: "我有创意时，喜欢用有趣的方式表达出来", talents: ['humor', 'creativity'] },
+            { text: "听音乐时，我能感受到音乐中的情感", talents: ['empathy', 'music'] },
+            { text: "我比较擅长记住别人的生日和重要事情", talents: ['memory', 'empathy'] },
+            { text: "我能很快察觉到别人的情绪变化", talents: ['empathy', 'insight'] },
+            { text: "朋友遇到困难时，我愿意倾听并提供帮助", talents: ['empathy', 'communication'] },
+            { text: "我能理解不同人的不同想法和感受", talents: ['empathy', 'insight'] },
+            { text: "学习新知识时，我能很快掌握要点", talents: ['learning', 'memory'] },
+            { text: "面对新环境，我能快速适应", talents: ['learning', 'adaptability'] },
+            { text: "我喜欢探索未知的领域", talents: ['learning', 'creativity'] },
+            { text: "遇到难题时，我喜欢分析问题的根本原因", talents: ['insight', 'logic'] },
+            { text: "我能从复杂信息中快速找到关键点", talents: ['insight', 'focus'] },
+            { text: "做决定前，我会考虑各种可能性", talents: ['insight', 'planning'] },
+            { text: "在团队中，我比较擅长协调大家的关系", talents: ['leadership', 'communication'] },
+            { text: "组织活动时，我能合理安排每个人的任务", talents: ['leadership', 'planning'] },
+            { text: "遇到突发情况，我能保持冷静并带领大家应对", talents: ['leadership', 'adaptability'] },
+            { text: "我能激励团队成员朝着共同目标努力", talents: ['leadership', 'communication'] },
+            { text: "我经常会有一些创新的想法", talents: ['creativity', 'imagination'] },
+            { text: "解决问题时，我喜欢尝试不同的方法", talents: ['creativity', 'adaptability'] },
+            { text: "我能把不同的想法组合成新的方案", talents: ['creativity', 'logic'] },
+            { text: "我对音乐节奏和旋律比较敏感", talents: ['music', 'focus'] },
+            { text: "我能通过音乐表达自己的情感", talents: ['music', 'empathy'] },
+            { text: "学习乐器或唱歌时，我进步比较快", talents: ['music', 'learning'] },
+            { text: "思考问题时，我喜欢按步骤分析", talents: ['logic', 'planning'] },
+            { text: "我能发现事情之间的逻辑关系", talents: ['logic', 'insight'] },
+            { text: "辩论时，我能清晰地表达自己的观点", talents: ['logic', 'communication'] },
+            { text: "与人交流时，我能清楚地表达自己的想法", talents: ['communication', 'logic'] },
+            { text: "我能根据不同的场合调整说话方式", talents: ['communication', 'adaptability'] },
+            { text: "演讲或汇报时，我比较自信", talents: ['communication', 'self_discipline'] },
+            { text: "学习舞蹈或运动时，我协调性比较好", talents: ['coordination', 'learning'] },
+            { text: "我能较好地控制身体的平衡", talents: ['coordination', 'focus'] },
+            { text: "动手操作时，我手眼协调能力不错", talents: ['coordination', 'memory'] },
+            { text: "我能坚持完成自己设定的目标", talents: ['self_discipline', 'focus'] },
+            { text: "即使遇到干扰，我也能保持专注", talents: ['self_discipline', 'adaptability'] },
+            { text: "我习惯按时完成计划中的任务", talents: ['self_discipline', 'planning'] },
+            { text: "做事前，我喜欢先制定详细的计划", talents: ['planning', 'logic'] },
+            { text: "我能合理安排时间，提高效率", talents: ['planning', 'self_discipline'] },
+            { text: "组织活动时，我能考虑到各种细节", talents: ['planning', 'memory'] },
+            { text: "工作时，我能长时间保持注意力集中", talents: ['focus', 'self_discipline'] },
+            { text: "即使环境嘈杂，我也能专心做事", talents: ['focus', 'adaptability'] },
+            { text: "我能快速进入工作状态", talents: ['focus', 'planning'] },
+            { text: "我经常在脑海中想象各种场景", talents: ['imagination', 'creativity'] },
+            { text: "听故事时，我能在脑中形成清晰的画面", talents: ['imagination', 'memory'] },
+            { text: "我能设想未来可能发生的各种情况", talents: ['imagination', 'planning'] },
+            { text: "面对变化，我能快速调整心态和策略", talents: ['adaptability', 'learning'] },
+            { text: "在新环境中，我能很快找到自己的位置", talents: ['adaptability', 'insight'] },
+            { text: "即使计划被打乱，我也能灵活应对", talents: ['adaptability', 'planning'] },
+            { text: "我喜欢用幽默的方式化解矛盾", talents: ['humor', 'communication'] },
+            { text: "我能记住很多细节信息", talents: ['memory', 'focus'] },
+            { text: "我能体会别人的感受，将心比心", talents: ['empathy', 'insight'] },
+            { text: "学习时，我能发现知识的内在规律", talents: ['insight', 'logic'] },
+            { text: "我能快速学会需要的技能", talents: ['learning', 'adaptability'] },
+            { text: "在团队中，我能发现每个人的特长", talents: ['leadership', 'empathy'] },
+            { text: "我能想出别人没想到的解决方案", talents: ['creativity', 'imagination'] },
+            { text: "我能分辨音乐中的细微差别", talents: ['music', 'focus'] },
+            { text: "思考时，我能保持清晰的逻辑", talents: ['logic', 'self_discipline'] },
+            { text: "我能用简单的话说明复杂的问题", talents: ['communication', 'insight'] }
+        ];
+
+        const OPTIONS = [
+            { value: 5, label: '非常认同' },
+            { value: 4, label: '比较认同' },
+            { value: 3, label: '部分认同' },
+            { value: 2, label: '不太认同' },
+            { value: 1, label: '完全不认同' }
+        ];
+
+        let currentQuestion = 0;
+        let answers = new Array(60).fill(null);
+
+        function init() {
+            renderQuestion();
+            updateProgress();
+            document.getElementById('prevBtn').addEventListener('click', goPrev);
+            document.getElementById('nextBtn').addEventListener('click', goNext);
+        }
+
+        function renderQuestion() {
+            const question = QUESTIONS[currentQuestion];
+            document.getElementById('questionText').textContent = question.text;
+            document.getElementById('questionNum').textContent = `第 ${currentQuestion + 1} 题 / 共 60 题`;
+
+            const container = document.getElementById('optionsContainer');
+            container.innerHTML = OPTIONS.map((opt, idx) => `
+                <div class="option ${answers[currentQuestion] === opt.value ? 'selected' : ''}" data-value="${opt.value}">
+                    <div class="letter">${String.fromCharCode(65 + idx)}</div>
+                    <span>${opt.label}</span>
+                </div>
+            `).join('');
+
+            container.querySelectorAll('.option').forEach(opt => {
+                opt.addEventListener('click', () => selectOption(parseInt(opt.dataset.value)));
+            });
+
+            document.getElementById('prevBtn').disabled = currentQuestion === 0;
+            document.getElementById('nextBtn').textContent = currentQuestion === 59 ? '提交' : '下一题';
+        }
+
+        function selectOption(value) {
+            answers[currentQuestion] = value;
+            renderQuestion();
+            updateProgress();
+            setTimeout(() => {
+                if (currentQuestion < 59) {
+                    currentQuestion++;
+                    renderQuestion();
+                }
+            }, 300);
+        }
+
+        function updateProgress() {
+            const answered = answers.filter(a => a !== null).length;
+            document.getElementById('answeredCount').textContent = `已答 ${answered} 题`;
+            document.getElementById('progressFill').style.width = `${(answered / 60) * 100}%`;
+        }
+
+        function goPrev() {
+            if (currentQuestion > 0) { currentQuestion--; renderQuestion(); }
+        }
+
+        function goNext() {
+            if (currentQuestion < 59) {
+                currentQuestion++;
+                renderQuestion();
+            } else {
+                if (answers.some(a => a === null)) {
+                    if (!confirm('还有未完成的题目，确定要提交吗？')) return;
+                }
+                showResults();
+            }
+        }
+
+        function showResults() {
+            document.getElementById('testPage').classList.add('hidden');
+            document.getElementById('resultPage').classList.add('active');
+
+            // 计算各天赋得分
+            const talentScores = {};
+            TALENTS.forEach(t => { talentScores[t.id] = { total: 0, count: 0 }; });
+
+            QUESTIONS.forEach((q, idx) => {
+                const ans = answers[idx] || 3;
+                q.talents.forEach(tid => {
+                    talentScores[tid].total += ans;
+                    talentScores[tid].count++;
+                });
+            });
+
+            // 计算平均分并排序
+            const results = TALENTS.map(t => ({
+                ...t,
+                score: talentScores[t.id].count > 0 ?
+                    Math.round((talentScores[t.id].total / talentScores[t.id].count) * 20) : 0
+            })).sort((a, b) => b.score - a.score);
+
+            // 绘制雷达图
+            const chart = echarts.init(document.getElementById('radarChart'));
+            chart.setOption({
+                radar: {
+                    indicator: TALENTS.map(t => ({ name: t.name, max: 100 })),
+                    radius: '65%',
+                    axisName: { color: '#333', fontSize: 12 }
+                },
+                series: [{
+                    type: 'radar',
+                    data: [{
+                        value: TALENTS.map(t => results.find(r => r.id === t.id).score),
+                        name: '天赋潜能',
+                        areaStyle: { color: 'rgba(79, 172, 254, 0.3)' },
+                        lineStyle: { color: '#4facfe', width: 2 },
+                        itemStyle: { color: '#4facfe' }
+                    }]
+                }]
+            });
+
+            // 生成总结
+            const top3 = results.slice(0, 3);
+            document.getElementById('resultSummary').innerHTML = `
+                <strong>您的核心天赋优势：</strong><br>
+                您在 <span style="color: #4facfe; font-weight: bold;">${top3[0].name}</span>、
+                <span style="color: #4facfe; font-weight: bold;">${top3[1].name}</span> 和
+                <span style="color: #4facfe; font-weight: bold;">${top3[2].name}</span>
+                方面表现突出，这些是您的核心竞争力。建议您在学习和工作中充分发挥这些优势，
+                同时也可以有意识地培养其他方面的能力。
+            `;
+
+            // 显示排名列表
+            document.getElementById('talentList').innerHTML = results.map((r, idx) => {
+                const levelClass = r.score >= 70 ? 'level-high' : (r.score >= 50 ? 'level-medium' : 'level-low');
+                return `
+                    <div class="talent-item">
+                        <div class="talent-header">
+                            <span class="talent-name">${idx + 1}. ${r.name}</span>
+                            <span class="talent-score">${r.score}分</span>
+                        </div>
+                        <div class="talent-bar">
+                            <div class="talent-fill ${levelClass}" style="width: ${r.score}%;"></div>
+                        </div>
+                        <div class="talent-desc">${r.desc}</div>
+                    </div>
+                `;
+            }).join('');
+
+            // 响应式处理
+            window.addEventListener('resize', () => chart.resize());
+        }
+
+        init();
+    </script>
+</body>
+</html>
