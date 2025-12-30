@@ -30,6 +30,80 @@
             font-size: 1.1rem;
             opacity: 0.9;
         }
+
+        /* 验证码输入区域 */
+        .code-section {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            margin: 0 auto 30px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .code-section h2 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1.5rem;
+        }
+        .code-section p {
+            color: #7f8c8d;
+            margin-bottom: 25px;
+            font-size: 0.95rem;
+        }
+        .code-input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .code-input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            text-align: center;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            transition: border-color 0.3s;
+        }
+        .code-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .btn-verify {
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-verify:hover {
+            transform: scale(1.02);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .error-msg {
+            color: #e74c3c;
+            margin-top: 15px;
+            display: none;
+        }
+        .success-msg {
+            color: #27ae60;
+            margin-top: 15px;
+            display: none;
+        }
+
+        /* 测试卡片区域 - 默认隐藏 */
+        .tests-section {
+            display: none;
+        }
+        .tests-section.show {
+            display: block;
+        }
         .tests-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -112,9 +186,22 @@
             opacity: 0.8;
             font-size: 0.9rem;
         }
+
+        /* 已验证标识 */
+        .verified-badge {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+
         @media (max-width: 768px) {
             .header h1 { font-size: 1.8rem; }
             .tests-grid { grid-template-columns: 1fr; }
+            .code-input-group { flex-direction: column; }
         }
     </style>
 </head>
@@ -125,38 +212,57 @@
             <p>专业的心理健康评估工具，帮助您更好地了解自己</p>
         </div>
 
-        <div class="tests-grid">
-            <div class="test-card scl90">
-                <div class="test-icon">📋</div>
-                <h2 class="test-title">SCL-90 心理健康自评量表</h2>
-                <p class="test-desc">从十个维度全面评估心理健康状况，包括躯体化、强迫症状、人际关系敏感、抑郁、焦虑等方面。</p>
-                <div class="test-meta">
-                    <span>📝 90题</span>
-                    <span>⏱️ 约15分钟</span>
-                </div>
-                <a href="scl90.html" class="btn-start">开始测试</a>
+        <!-- 访问码验证区域 -->
+        <div class="code-section" id="codeSection">
+            <h2>请输入访问码</h2>
+            <p>输入您购买时获得的访问码以开始测试</p>
+            <div class="code-input-group">
+                <input type="text" class="code-input" id="accessCode" placeholder="请输入访问码" maxlength="12">
+            </div>
+            <button class="btn-verify" onclick="verifyCode()">验证并进入</button>
+            <p class="error-msg" id="errorMsg">访问码无效，请检查后重试</p>
+            <p class="success-msg" id="successMsg">验证成功！正在进入...</p>
+        </div>
+
+        <!-- 测试列表区域 - 验证后显示 -->
+        <div class="tests-section" id="testsSection">
+            <div style="text-align: center;">
+                <span class="verified-badge">已验证 - 可以开始测试</span>
             </div>
 
-            <div class="test-card mbti">
-                <div class="test-icon">🔤</div>
-                <h2 class="test-title">MBTI 16型人格测试</h2>
-                <p class="test-desc">基于荣格心理类型理论，通过四个维度分析您的人格特点，帮助您了解自己的思维和行为模式。</p>
-                <div class="test-meta">
-                    <span>📝 93题</span>
-                    <span>⏱️ 约15分钟</span>
+            <div class="tests-grid">
+                <div class="test-card scl90">
+                    <div class="test-icon">📋</div>
+                    <h2 class="test-title">SCL-90 心理健康自评量表</h2>
+                    <p class="test-desc">从十个维度全面评估心理健康状况，包括躯体化、强迫症状、人际关系敏感、抑郁、焦虑等方面。</p>
+                    <div class="test-meta">
+                        <span>📝 90题</span>
+                        <span>⏱️ 约15分钟</span>
+                    </div>
+                    <a href="scl90.html" class="btn-start">开始测试</a>
                 </div>
-                <a href="mbti.html" class="btn-start">开始测试</a>
-            </div>
 
-            <div class="test-card apt">
-                <div class="test-icon">⭐</div>
-                <h2 class="test-title">APT 天赋潜能评估系统</h2>
-                <p class="test-desc">全面评估您在16个核心能力维度的表现，包括创造力、情感洞察力、领导力、逻辑推理等方面。</p>
-                <div class="test-meta">
-                    <span>📝 60题</span>
-                    <span>⏱️ 约10分钟</span>
+                <div class="test-card mbti">
+                    <div class="test-icon">🔤</div>
+                    <h2 class="test-title">MBTI 16型人格测试</h2>
+                    <p class="test-desc">基于荣格心理类型理论，通过四个维度分析您的人格特点，帮助您了解自己的思维和行为模式。</p>
+                    <div class="test-meta">
+                        <span>📝 93题</span>
+                        <span>⏱️ 约15分钟</span>
+                    </div>
+                    <a href="mbti.html" class="btn-start">开始测试</a>
                 </div>
-                <a href="apt.html" class="btn-start">开始测试</a>
+
+                <div class="test-card apt">
+                    <div class="test-icon">⭐</div>
+                    <h2 class="test-title">APT 天赋潜能评估系统</h2>
+                    <p class="test-desc">全面评估您在16个核心能力维度的表现，包括创造力、情感洞察力、领导力、逻辑推理等方面。</p>
+                    <div class="test-meta">
+                        <span>📝 60题</span>
+                        <span>⏱️ 约10分钟</span>
+                    </div>
+                    <a href="apt.html" class="btn-start">开始测试</a>
+                </div>
             </div>
         </div>
 
@@ -165,5 +271,102 @@
             <p>如有心理健康问题，请咨询专业心理咨询师</p>
         </div>
     </div>
+
+    <script>
+        // ========== 访问码管理 ==========
+        // 有效的访问码列表（简单混淆）
+        // 你可以在这里添加或删除访问码
+        // 格式：每个码用逗号分隔
+        const _0x = ['PSYC2024A1', 'PSYC2024A2', 'PSYC2024A3', 'PSYC2024B1', 'PSYC2024B2',
+                     'TEST123456', 'MIND2024X1', 'MIND2024X2', 'SOUL2024Y1', 'SOUL2024Y2'];
+
+        // 已使用的码存储在 localStorage
+        const USED_KEY = 'usedCodes';
+
+        function getUsedCodes() {
+            try {
+                return JSON.parse(localStorage.getItem(USED_KEY) || '[]');
+            } catch {
+                return [];
+            }
+        }
+
+        function markCodeAsUsed(code) {
+            const used = getUsedCodes();
+            if (!used.includes(code)) {
+                used.push(code);
+                localStorage.setItem(USED_KEY, JSON.stringify(used));
+            }
+        }
+
+        function isValidCode(code) {
+            const upperCode = code.toUpperCase().trim();
+            const used = getUsedCodes();
+            // 检查是否在有效列表中且未被使用
+            return _0x.includes(upperCode) && !used.includes(upperCode);
+        }
+
+        function verifyCode() {
+            const input = document.getElementById('accessCode');
+            const errorMsg = document.getElementById('errorMsg');
+            const successMsg = document.getElementById('successMsg');
+            const code = input.value.trim();
+
+            if (!code) {
+                errorMsg.textContent = '请输入访问码';
+                errorMsg.style.display = 'block';
+                successMsg.style.display = 'none';
+                return;
+            }
+
+            if (isValidCode(code)) {
+                // 验证成功
+                errorMsg.style.display = 'none';
+                successMsg.style.display = 'block';
+
+                // 标记为已使用
+                markCodeAsUsed(code.toUpperCase().trim());
+
+                // 保存验证状态到 sessionStorage（当前会话有效）
+                sessionStorage.setItem('verified', 'true');
+                sessionStorage.setItem('verifiedCode', code.toUpperCase().trim());
+
+                // 延迟显示测试区域
+                setTimeout(() => {
+                    document.getElementById('codeSection').style.display = 'none';
+                    document.getElementById('testsSection').classList.add('show');
+                }, 800);
+            } else {
+                // 验证失败
+                const used = getUsedCodes();
+                if (used.includes(code.toUpperCase().trim())) {
+                    errorMsg.textContent = '此访问码已被使用';
+                } else {
+                    errorMsg.textContent = '访问码无效，请检查后重试';
+                }
+                errorMsg.style.display = 'block';
+                successMsg.style.display = 'none';
+                input.style.borderColor = '#e74c3c';
+                setTimeout(() => {
+                    input.style.borderColor = '#e0e0e0';
+                }, 2000);
+            }
+        }
+
+        // 回车键触发验证
+        document.getElementById('accessCode').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                verifyCode();
+            }
+        });
+
+        // 检查是否已验证（当前会话）
+        window.onload = function() {
+            if (sessionStorage.getItem('verified') === 'true') {
+                document.getElementById('codeSection').style.display = 'none';
+                document.getElementById('testsSection').classList.add('show');
+            }
+        };
+    </script>
 </body>
 </html>
